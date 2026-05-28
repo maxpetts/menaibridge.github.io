@@ -1,12 +1,14 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-GB">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Is the Menai Bridge Open?</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Source+Sans+3:wght@300;400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Source+Sans+3:wght@300;400;600&display=swap">
+<link rel="dns-prefetch" href="https://supabase.co">
 <style>
   :root {
     --open: #1a6b3a;
@@ -16,13 +18,11 @@
     --closed-bg: #faeaea;
     --closed-border: #d05c5c;
     --water: #1d4e7c;
-    --water-light: #e8f0f8;
     --ink: #1a1c20;
     --muted: #5a6070;
     --surface: #f7f5f0;
     --card: #ffffff;
     --border: #ddd9d0;
-    --gold: #b8860b;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -57,14 +57,19 @@
     line-height: 1.1;
   }
 
-  .subtitle {
-    font-size: 0.95rem;
+  .title-welsh {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1rem, 2.4vw, 1.3rem);
+    font-weight: 400;
+    font-style: italic;
     color: var(--muted);
     margin-top: 0.5rem;
-    font-weight: 300;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
   }
+
+
+
 
   main {
     max-width: 680px;
@@ -337,6 +342,61 @@
     font-style: italic;
   }
 
+  /* SERVICE DOWN OVERLAY */
+  .outage-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(26, 28, 32, 0.6);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+  .outage-overlay.visible {
+    display: flex;
+  }
+  .outage-box {
+    background: var(--card);
+    border: 1.5px solid var(--closed-border);
+    border-radius: 14px;
+    padding: 2rem 2rem 1.75rem;
+    max-width: 360px;
+    width: 100%;
+    text-align: center;
+  }
+  .outage-icon {
+    font-size: 2rem;
+    margin-bottom: 0.75rem;
+    display: block;
+  }
+  .outage-box h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--closed);
+    margin-bottom: 0.5rem;
+  }
+  .outage-box p {
+    font-size: 0.88rem;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-bottom: 1.25rem;
+  }
+  .outage-retry {
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 600;
+    padding: 0.6rem 1.4rem;
+    border-radius: 6px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--ink);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .outage-retry:hover { background: var(--border); }
+
   /* TOAST */
   .toast {
     position: fixed;
@@ -466,22 +526,8 @@
   </svg>
 
   <h1>Is the Menai Bridge Open?</h1>
-  <p class="subtitle">Menai Strait · Anglesey, Wales</p>
+  <p class="title-welsh">A ydy Pont Menai ar Agor?</p>
 </header>
-
-<!-- Setup banner (shown until Supabase is configured) -->
-<div id="setupBanner" class="setup-banner" style="max-width:680px;margin:0 auto 0;padding-left:1rem;padding-right:1rem;display:none">
-  <strong>⚙️ One-time Supabase setup needed</strong>
-  To enable live cross-user reports, create a free Supabase project and add your credentials to the top of this file.
-  <ol>
-    <li>Go to <a href="https://supabase.com" target="_blank">supabase.com</a> → New project (free tier)</li>
-    <li>In the SQL editor, run the setup query shown in the <code>&lt;!-- SUPABASE SETUP --&gt;</code> comment at the top of <code>index.html</code></li>
-    <li>Copy your <strong>Project URL</strong> and <strong>anon public key</strong> from Project Settings → API</li>
-    <li>Paste them into <code>SUPABASE_URL</code> and <code>SUPABASE_KEY</code> at the top of the <code>&lt;script&gt;</code> block</li>
-    <li>Enable Row Level Security → add a policy allowing <code>SELECT</code> and <code>INSERT</code> for <code>anon</code> role</li>
-  </ol>
-  Until then, reports are saved to <strong>this browser only</strong>.
-</div>
 
 <main>
 
@@ -497,7 +543,7 @@
 
   <!-- Report card -->
   <div class="report-card">
-    <h2>Report status</h2>
+    <h2>Make a report</h2>
 
     <div class="name-row">
       <label for="nameInput">Your name <span style="font-weight:300;text-transform:none;letter-spacing:0">(optional)</span></label>
@@ -518,13 +564,22 @@
 
   <!-- Recent reports feed -->
   <div class="feed-card">
-    <h2>Recent reports <span id="dbPill" class="db-pill local"><span class="dot"></span>local</span></h2>
+    <h2>Recent reports <span id="dbPill" class="db-pill live"><span class="dot"></span>live</span></h2>
     <ul class="feed-list" id="feedList">
       <li class="feed-empty">No reports yet.</li>
     </ul>
   </div>
 
 </main>
+
+<div class="outage-overlay" id="outageOverlay">
+  <div class="outage-box">
+    <span class="outage-icon">⚠</span>
+    <h2>Service currently down</h2>
+    <p>We're unable to reach the reports database right now. Please try again in a moment.</p>
+    <button class="outage-retry" onclick="hideOutage();poll()">Try again</button>
+  </div>
+</div>
 
 <div class="toast" id="toast"></div>
 
@@ -556,17 +611,27 @@
 // ─── SUPABASE CONFIG ──────────────────────────────────────────────────────────
 // Replace these two values with your own from:
 // Supabase dashboard → Project Settings → API
-const SUPABASE_URL = '';   // e.g. 'https://xyzabc.supabase.co'
-const SUPABASE_KEY = '';   // anon / public key
+const SUPABASE_URL = 'https://zuckneoukmqyzggomles.supabase.co';   // e.g. 'https://xyzabc.supabase.co'
+const SUPABASE_KEY = 'sb_publishable_Qxtj_eok3Mg9VJHWtIzAVA_yUyRzRuB';   // anon / public key
 // ─────────────────────────────────────────────────────────────────────────────
 
 const GLOBAL_COOLDOWN_MS = 30 * 1000;
 const USER_COOLDOWN_MS   = 5 * 60 * 1000;
 const MAX_FEED_ITEMS     = 5;
 
-const USE_SUPABASE = SUPABASE_URL.length > 0 && SUPABASE_KEY.length > 0;
+// ── Cached DOM refs ───────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const elBanner  = $('statusBanner');
+const elVal     = $('statusValue');
+const elMeta    = $('statusMeta');
+const elFeed    = $('feedList');
+const elBtnO    = $('btnOpen');
+const elBtnC    = $('btnClosed');
+const elMsg     = $('rateMsg');
+const elToast   = $('toast');
+const elOverlay = $('outageOverlay');
 
-// ── User identity (persisted per-browser) ────────────────────────────────────
+// ── User identity (persisted per-browser for rate limiting) ──────────────────
 function getUserId() {
   let id = localStorage.getItem('menai-uid');
   if (!id) {
@@ -576,10 +641,6 @@ function getUserId() {
   return id;
 }
 const userId = getUserId();
-
-// ── Local storage helpers (fallback + rate-limit cache) ──────────────────────
-function lsGet(key) { try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } }
-function lsSet(key, v) { try { localStorage.setItem(key, JSON.stringify(v)); } catch {} }
 
 // ── Supabase REST helpers ─────────────────────────────────────────────────────
 async function sbFetch(path, opts = {}) {
@@ -611,37 +672,35 @@ async function insertReportRemote(status, name) {
   });
 }
 
-// ── Normalise rows to a common shape ─────────────────────────────────────────
-// Local: { status, name, uid, ts }
-// Remote: { status, name, uid, created_at }
+// ── Normalise remote rows ─────────────────────────────────────────────────────
 function normalise(r) {
   return {
     status: r.status,
     name:   r.name || '',
     uid:    r.uid,
-    ts:     r.ts || new Date(r.created_at).getTime()
+    ts:     new Date(r.created_at).getTime()
   };
 }
 
 // ── In-memory cache of fetched reports ───────────────────────────────────────
 let cachedReports = [];
 
-async function loadReports() {
-  if (USE_SUPABASE) {
-    try {
-      const rows = await fetchReportsRemote();
-      cachedReports = rows.map(normalise);
-      // Also mirror into localStorage for rate-limit checks when offline
-      lsSet('menai-reports', cachedReports);
-      return;
-    } catch (e) {
-      console.warn('Supabase fetch failed, falling back to localStorage', e);
-    }
-  }
-  cachedReports = lsGet('menai-reports') || [];
+function showOutage() {
+  elOverlay.classList.add('visible');
+  elBtnO.disabled = true;
+  elBtnC.disabled = true;
 }
 
-function getReports() { return cachedReports; }
+function hideOutage() {
+  elOverlay.classList.remove('visible');
+}
+
+async function loadReports() {
+  const rows = await fetchReportsRemote();
+  cachedReports = rows.map(normalise);
+  hideOutage();
+}
+
 
 // ── UI helpers ────────────────────────────────────────────────────────────────
 function escHtml(s) {
@@ -661,66 +720,35 @@ function relativeTime(ts) {
 }
 
 function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2800);
+  elToast.textContent = msg;
+  elToast.classList.add('show');
+  setTimeout(() => elToast.classList.remove('show'), 2800);
 }
 
-function setDbPill() {
-  const pill = document.getElementById('dbPill');
-  if (USE_SUPABASE) {
-    pill.className = 'db-pill live';
-    pill.innerHTML = '<span class="dot"></span>live';
-  } else {
-    pill.className = 'db-pill local';
-    pill.innerHTML = '<span class="dot"></span>local';
-    document.getElementById('setupBanner').style.display = 'block';
-  }
-}
 
 // ── Render ────────────────────────────────────────────────────────────────────
-function renderFeed() {
-  const reports = getReports();
-  const list = document.getElementById('feedList');
-  if (!reports.length) {
-    list.innerHTML = '<li class="feed-empty">No reports yet — be the first!</li>';
-    return;
+function render() {
+  const r0 = cachedReports[0];
+  // status banner
+  if (!r0) {
+    elBanner.className = 'status-banner unknown';
+    elVal.textContent  = 'No reports yet';
+    elMeta.textContent = '';
+    elFeed.innerHTML   = '<li class="feed-empty">No reports yet — be the first!</li>';
+  } else {
+    elBanner.className = `status-banner ${r0.status}`;
+    elVal.textContent  = r0.status === 'open' ? '✓ Open' : '✕ Closed';
+    elMeta.textContent = `Reported ${relativeTime(r0.ts)} ${r0.name ? 'by ' + escHtml(r0.name) : 'by anonymous'}`;
+    elFeed.innerHTML   = cachedReports.slice(0, MAX_FEED_ITEMS).map(r =>
+      `<li class="feed-item"><span class="feed-badge ${r.status}">${r.status === 'open' ? 'Open' : 'Closed'}</span><div class="feed-info"><div class="feed-name">${escHtml(r.name || 'Anonymous')}</div><div class="feed-time">${relativeTime(r.ts)}</div></div></li>`
+    ).join('');
   }
-  list.innerHTML = reports.slice(0, MAX_FEED_ITEMS).map(r => `
-    <li class="feed-item">
-      <span class="feed-badge ${r.status}">${r.status === 'open' ? 'Open' : 'Closed'}</span>
-      <div class="feed-info">
-        <div class="feed-name">${escHtml(r.name || 'Anonymous')}</div>
-        <div class="feed-time">${relativeTime(r.ts)}</div>
-      </div>
-    </li>
-  `).join('');
-}
-
-function renderStatus() {
-  const reports = getReports();
-  const banner = document.getElementById('statusBanner');
-  const val    = document.getElementById('statusValue');
-  const meta   = document.getElementById('statusMeta');
-
-  if (!reports.length) {
-    banner.className = 'status-banner unknown';
-    val.textContent  = 'No reports yet';
-    meta.textContent = '';
-    return;
-  }
-  const latest = reports[0];
-  banner.className = `status-banner ${latest.status}`;
-  val.textContent  = latest.status === 'open' ? '✓ Open' : '✕ Closed';
-  const reporter   = latest.name ? `by ${escHtml(latest.name)}` : 'by anonymous';
-  meta.textContent = `Reported ${relativeTime(latest.ts)} ${reporter}`;
 }
 
 // ── Rate limiting (always uses local timestamps for instant feedback) ─────────
 function checkRateLimit() {
   const now     = Date.now();
-  const reports = getReports();
+  const reports = cachedReports;
 
   // Global 30 s — anyone
   if (reports.length) {
@@ -746,13 +774,10 @@ function checkRateLimit() {
 }
 
 function updateButtonState() {
-  const check = checkRateLimit();
-  const btnO  = document.getElementById('btnOpen');
-  const btnC  = document.getElementById('btnClosed');
-  const msg   = document.getElementById('rateMsg');
-  btnO.disabled = btnC.disabled = check.blocked;
-  msg.textContent = check.blocked ? check.reason : '';
-  msg.className   = check.blocked ? 'rate-msg warning' : 'rate-msg';
+  const {blocked, reason} = checkRateLimit();
+  elBtnO.disabled = elBtnC.disabled = blocked;
+  elMsg.textContent = blocked ? reason : '';
+  elMsg.className   = blocked ? 'rate-msg warning' : 'rate-msg';
 }
 
 // ── Report submission ─────────────────────────────────────────────────────────
@@ -761,44 +786,36 @@ async function report(status) {
   if (check.blocked) { showToast(check.reason); return; }
 
   // Optimistic UI
-  document.getElementById('btnOpen').disabled   = true;
-  document.getElementById('btnClosed').disabled = true;
+  elBtnO.disabled = true;
+  elBtnC.disabled = true;
 
-  const name  = document.getElementById('nameInput').value.trim().slice(0, 60);
-  const entry = { status, name, uid: userId, ts: Date.now() };
+  const name  = $('nameInput').value.trim().slice(0, 60);
 
-  if (USE_SUPABASE) {
-    try {
-      await insertReportRemote(status, name);
-      await loadReports();         // refresh from DB
-    } catch (e) {
-      console.warn('Supabase insert failed, saving locally', e);
-      cachedReports.unshift(entry);
-      if (cachedReports.length > 50) cachedReports.length = 50;
-      lsSet('menai-reports', cachedReports);
-    }
-  } else {
-    cachedReports.unshift(entry);
-    if (cachedReports.length > 50) cachedReports.length = 50;
-    lsSet('menai-reports', cachedReports);
+  try {
+    await insertReportRemote(status, name);
+    await loadReports();
+  } catch {
+    showOutage();
+    return;
   }
 
-  renderStatus();
-  renderFeed();
+  render();
   updateButtonState();
   showToast(status === 'open' ? '✓ Reported as open — thanks!' : '✕ Reported as closed — thanks!');
 }
 
 // ── Poll for new reports every 30 s (keeps feed live for all users) ───────────
 async function poll() {
-  await loadReports();
-  renderStatus();
-  renderFeed();
-  updateButtonState();
+  try {
+    await loadReports();
+    render();
+    updateButtonState();
+  } catch {
+    showOutage();
+  }
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
-setDbPill();
 poll();
 setInterval(poll, 30000);
 setInterval(updateButtonState, 5000); // countdown refresh
