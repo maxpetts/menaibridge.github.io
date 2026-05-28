@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Is the Menai Bridge Open?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --open: #1a6b3a;
+    --open-bg: #e8f5ed;
+    --open-border: #5db87a;
+    --closed: #8b1a1a;
+    --closed-bg: #faeaea;
+    --closed-border: #d05c5c;
+    --water: #1d4e7c;
+    --water-light: #e8f0f8;
+    --ink: #1a1c20;
+    --muted: #5a6070;
+    --surface: #f7f5f0;
+    --card: #ffffff;
+    --border: #ddd9d0;
+    --gold: #b8860b;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Source Sans 3', sans-serif;
+    background: var(--surface);
+    color: var(--ink);
+    min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse at 20% 0%, rgba(29,78,124,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 100%, rgba(29,78,124,0.04) 0%, transparent 60%);
+  }
+
+  header {
+    text-align: center;
+    padding: 3rem 1rem 1.5rem;
+    position: relative;
+  }
+
+  .bridge-icon {
+    display: block;
+    margin: 0 auto 1.5rem;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+
+  .subtitle {
+    font-size: 0.95rem;
+    color: var(--muted);
+    margin-top: 0.5rem;
+    font-weight: 300;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  main {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 0 1rem 4rem;
+  }
+
+  /* STATUS BANNER */
+  .status-banner {
+    border-radius: 12px;
+    padding: 1.5rem 2rem;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    border: 1.5px solid;
+    transition: all 0.4s ease;
+  }
+  .status-banner.open {
+    background: var(--open-bg);
+    border-color: var(--open-border);
+  }
+  .status-banner.closed {
+    background: var(--closed-bg);
+    border-color: var(--closed-border);
+  }
+  .status-banner.unknown {
+    background: #f5f3ee;
+    border-color: var(--border);
+  }
+  .status-dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .status-banner.open .status-dot { background: var(--open); box-shadow: 0 0 0 4px rgba(26,107,58,0.2); }
+  .status-banner.closed .status-dot { background: var(--closed); box-shadow: 0 0 0 4px rgba(139,26,26,0.2); }
+  .status-banner.unknown .status-dot { background: var(--muted); }
+  .status-text {
+    flex: 1;
+  }
+  .status-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 2px;
+  }
+  .status-value {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1.1;
+  }
+  .status-banner.open .status-value { color: var(--open); }
+  .status-banner.closed .status-value { color: var(--closed); }
+  .status-banner.unknown .status-value { color: var(--muted); }
+  .status-meta {
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin-top: 3px;
+  }
+
+  /* REPORT CARD */
+  .report-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.75rem 2rem;
+    margin-bottom: 2rem;
+  }
+  .report-card h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    font-weight: 400;
+    color: var(--ink);
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .report-card h2::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .name-row {
+    margin-bottom: 1.25rem;
+  }
+  .name-row label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .name-row input {
+    width: 100%;
+    padding: 0.55rem 0.85rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 0.95rem;
+    background: var(--surface);
+    color: var(--ink);
+    transition: border-color 0.2s;
+    outline: none;
+  }
+  .name-row input:focus {
+    border-color: var(--water);
+  }
+  .name-row input::placeholder {
+    color: #aaa;
+  }
+
+  .cta-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .btn {
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 0.9rem 1rem;
+    border-radius: 8px;
+    border: 2px solid;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    letter-spacing: 0.01em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .btn-open {
+    background: var(--open-bg);
+    border-color: var(--open-border);
+    color: var(--open);
+  }
+  .btn-open:hover:not(:disabled) {
+    background: var(--open);
+    color: white;
+    border-color: var(--open);
+  }
+
+  .btn-closed {
+    background: var(--closed-bg);
+    border-color: var(--closed-border);
+    color: var(--closed);
+  }
+  .btn-closed:hover:not(:disabled) {
+    background: var(--closed);
+    color: white;
+    border-color: var(--closed);
+  }
+
+  /* RATE LIMIT MESSAGE */
+  .rate-msg {
+    margin-top: 1rem;
+    font-size: 0.85rem;
+    color: var(--muted);
+    text-align: center;
+    min-height: 1.2em;
+    font-style: italic;
+  }
+  .rate-msg.warning {
+    color: #8b5a00;
+  }
+
+  /* FEED */
+  .feed-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.75rem 2rem;
+  }
+  .feed-card h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    font-weight: 400;
+    color: var(--ink);
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .feed-card h2::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .feed-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .feed-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .feed-item:last-child { border-bottom: none; }
+
+  .feed-badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 20px;
+    flex-shrink: 0;
+    min-width: 60px;
+    text-align: center;
+  }
+  .feed-badge.open {
+    background: var(--open-bg);
+    color: var(--open);
+    border: 1px solid var(--open-border);
+  }
+  .feed-badge.closed {
+    background: var(--closed-bg);
+    color: var(--closed);
+    border: 1px solid var(--closed-border);
+  }
+
+  .feed-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .feed-name {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .feed-time {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-top: 1px;
+  }
+
+  .feed-empty {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.9rem;
+    padding: 2rem 0;
+    font-style: italic;
+  }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--ink);
+    color: white;
+    padding: 0.7rem 1.4rem;
+    border-radius: 40px;
+    font-size: 0.88rem;
+    font-weight: 400;
+    pointer-events: none;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    opacity: 0;
+    z-index: 100;
+    white-space: nowrap;
+  }
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 2rem 0;
+    opacity: 0.5;
+  }
+
+  footer {
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--muted);
+    padding-bottom: 2rem;
+    letter-spacing: 0.03em;
+  }
+
+  /* SETUP BANNER */
+  .setup-banner {
+    background: #fffbea;
+    border: 1.5px solid #e6c84a;
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 2rem;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: #5a4a00;
+  }
+  .setup-banner strong {
+    display: block;
+    font-size: 0.92rem;
+    margin-bottom: 0.4rem;
+    color: #3d3200;
+  }
+  .setup-banner code {
+    font-family: 'Courier New', monospace;
+    background: rgba(0,0,0,0.08);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 0.82rem;
+  }
+  .setup-banner ol {
+    margin: 0.6rem 0 0 1.1rem;
+  }
+  .setup-banner ol li { margin-bottom: 0.3rem; }
+  .setup-banner a { color: #1d4e7c; }
+
+  /* DB status indicator */
+  .db-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-left: 0.6rem;
+    vertical-align: middle;
+  }
+  .db-pill.live {
+    background: var(--open-bg);
+    color: var(--open);
+    border: 1px solid var(--open-border);
+  }
+  .db-pill.local {
+    background: #f5f3ee;
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+  .db-pill .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <!-- Suspension bridge SVG icon -->
+  <svg class="bridge-icon" width="120" height="52" viewBox="0 0 120 52" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <!-- water -->
+    <path d="M0 44 Q15 40 30 44 Q45 48 60 44 Q75 40 90 44 Q105 48 120 44" stroke="#1d4e7c" stroke-width="1.5" fill="none" stroke-dasharray="4 3" opacity="0.35"/>
+    <!-- deck -->
+    <rect x="8" y="36" width="104" height="4" rx="1" fill="#b8860b" opacity="0.9"/>
+    <!-- left tower -->
+    <rect x="28" y="12" width="6" height="28" rx="1" fill="#1a1c20" opacity="0.8"/>
+    <!-- right tower -->
+    <rect x="86" y="12" width="6" height="28" rx="1" fill="#1a1c20" opacity="0.8"/>
+    <!-- tower tops -->
+    <rect x="26" y="8" width="10" height="6" rx="1" fill="#1a1c20" opacity="0.8"/>
+    <rect x="84" y="8" width="10" height="6" rx="1" fill="#1a1c20" opacity="0.8"/>
+    <!-- main cables -->
+    <path d="M31 12 Q60 26 89 12" stroke="#5a6070" stroke-width="1.5" fill="none"/>
+    <!-- hangers -->
+    <line x1="40" y1="18.5" x2="40" y2="36" stroke="#5a6070" stroke-width="0.8" opacity="0.6"/>
+    <line x1="50" y1="22.5" x2="50" y2="36" stroke="#5a6070" stroke-width="0.8" opacity="0.6"/>
+    <line x1="60" y1="24.5" x2="60" y2="36" stroke="#5a6070" stroke-width="0.8" opacity="0.6"/>
+    <line x1="70" y1="22.5" x2="70" y2="36" stroke="#5a6070" stroke-width="0.8" opacity="0.6"/>
+    <line x1="80" y1="18.5" x2="80" y2="36" stroke="#5a6070" stroke-width="0.8" opacity="0.6"/>
+    <!-- side cables -->
+    <path d="M8 36 Q20 20 31 12" stroke="#5a6070" stroke-width="1.2" fill="none"/>
+    <path d="M112 36 Q100 20 89 12" stroke="#5a6070" stroke-width="1.2" fill="none"/>
+  </svg>
+
+  <h1>Is the Menai Bridge Open?</h1>
+  <p class="subtitle">Menai Strait · Anglesey, Wales</p>
+</header>
+
+<!-- Setup banner (shown until Supabase is configured) -->
+<div id="setupBanner" class="setup-banner" style="max-width:680px;margin:0 auto 0;padding-left:1rem;padding-right:1rem;display:none">
+  <strong>⚙️ One-time Supabase setup needed</strong>
+  To enable live cross-user reports, create a free Supabase project and add your credentials to the top of this file.
+  <ol>
+    <li>Go to <a href="https://supabase.com" target="_blank">supabase.com</a> → New project (free tier)</li>
+    <li>In the SQL editor, run the setup query shown in the <code>&lt;!-- SUPABASE SETUP --&gt;</code> comment at the top of <code>index.html</code></li>
+    <li>Copy your <strong>Project URL</strong> and <strong>anon public key</strong> from Project Settings → API</li>
+    <li>Paste them into <code>SUPABASE_URL</code> and <code>SUPABASE_KEY</code> at the top of the <code>&lt;script&gt;</code> block</li>
+    <li>Enable Row Level Security → add a policy allowing <code>SELECT</code> and <code>INSERT</code> for <code>anon</code> role</li>
+  </ol>
+  Until then, reports are saved to <strong>this browser only</strong>.
+</div>
+
+<main>
+
+  <!-- Current status banner -->
+  <div class="status-banner unknown" id="statusBanner">
+    <div class="status-dot"></div>
+    <div class="status-text">
+      <div class="status-label">Last reported status</div>
+      <div class="status-value" id="statusValue">Loading…</div>
+      <div class="status-meta" id="statusMeta"></div>
+    </div>
+  </div>
+
+  <!-- Report card -->
+  <div class="report-card">
+    <h2>Report status</h2>
+
+    <div class="name-row">
+      <label for="nameInput">Your name <span style="font-weight:300;text-transform:none;letter-spacing:0">(optional)</span></label>
+      <input type="text" id="nameInput" placeholder="e.g. Rhys from Bangor" maxlength="60" autocomplete="off">
+    </div>
+
+    <div class="cta-row">
+      <button class="btn btn-open" id="btnOpen" onclick="report('open')">
+        ✓ &nbsp;Open
+      </button>
+      <button class="btn btn-closed" id="btnClosed" onclick="report('closed')">
+        ✕ &nbsp;Closed
+      </button>
+    </div>
+
+    <div class="rate-msg" id="rateMsg"></div>
+  </div>
+
+  <!-- Recent reports feed -->
+  <div class="feed-card">
+    <h2>Recent reports <span id="dbPill" class="db-pill local"><span class="dot"></span>local</span></h2>
+    <ul class="feed-list" id="feedList">
+      <li class="feed-empty">No reports yet.</li>
+    </ul>
+  </div>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<div style="max-width:680px;margin:0 auto;">
+  <footer>Community-powered · Reports reflect user observations only · Not an official source</footer>
+</div>
+
+<!--
+  SUPABASE SETUP — run this SQL once in your Supabase project's SQL editor:
+  ============================================================================
+
+  create table reports (
+    id         bigint generated always as identity primary key,
+    status     text not null check (status in ('open','closed')),
+    name       text,
+    uid        text not null,
+    created_at timestamptz default now()
+  );
+
+  -- Allow anyone to read and insert (public crowd-sourced data)
+  alter table reports enable row level security;
+  create policy "public read"   on reports for select using (true);
+  create policy "public insert" on reports for insert with check (true);
+
+  ============================================================================
+  Then paste your project URL and anon key into the two constants below.
+-->
+<script>
+// ─── SUPABASE CONFIG ──────────────────────────────────────────────────────────
+// Replace these two values with your own from:
+// Supabase dashboard → Project Settings → API
+const SUPABASE_URL = '';   // e.g. 'https://xyzabc.supabase.co'
+const SUPABASE_KEY = '';   // anon / public key
+// ─────────────────────────────────────────────────────────────────────────────
+
+const GLOBAL_COOLDOWN_MS = 30 * 1000;
+const USER_COOLDOWN_MS   = 5 * 60 * 1000;
+const MAX_FEED_ITEMS     = 5;
+
+const USE_SUPABASE = SUPABASE_URL.length > 0 && SUPABASE_KEY.length > 0;
+
+// ── User identity (persisted per-browser) ────────────────────────────────────
+function getUserId() {
+  let id = localStorage.getItem('menai-uid');
+  if (!id) {
+    id = 'u' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+    localStorage.setItem('menai-uid', id);
+  }
+  return id;
+}
+const userId = getUserId();
+
+// ── Local storage helpers (fallback + rate-limit cache) ──────────────────────
+function lsGet(key) { try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } }
+function lsSet(key, v) { try { localStorage.setItem(key, JSON.stringify(v)); } catch {} }
+
+// ── Supabase REST helpers ─────────────────────────────────────────────────────
+async function sbFetch(path, opts = {}) {
+  const res = await fetch(SUPABASE_URL + '/rest/v1/' + path, {
+    ...opts,
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': opts.prefer || '',
+      ...(opts.headers || {})
+    }
+  });
+  if (!res.ok) throw new Error(await res.text());
+  const ct = res.headers.get('content-type') || '';
+  return ct.includes('json') ? res.json() : null;
+}
+
+async function fetchReportsRemote() {
+  // Returns newest first, last 50 rows
+  return sbFetch('reports?select=id,status,name,uid,created_at&order=created_at.desc&limit=50');
+}
+
+async function insertReportRemote(status, name) {
+  return sbFetch('reports', {
+    method: 'POST',
+    prefer: 'return=representation',
+    body: JSON.stringify({ status, name: name || null, uid: userId })
+  });
+}
+
+// ── Normalise rows to a common shape ─────────────────────────────────────────
+// Local: { status, name, uid, ts }
+// Remote: { status, name, uid, created_at }
+function normalise(r) {
+  return {
+    status: r.status,
+    name:   r.name || '',
+    uid:    r.uid,
+    ts:     r.ts || new Date(r.created_at).getTime()
+  };
+}
+
+// ── In-memory cache of fetched reports ───────────────────────────────────────
+let cachedReports = [];
+
+async function loadReports() {
+  if (USE_SUPABASE) {
+    try {
+      const rows = await fetchReportsRemote();
+      cachedReports = rows.map(normalise);
+      // Also mirror into localStorage for rate-limit checks when offline
+      lsSet('menai-reports', cachedReports);
+      return;
+    } catch (e) {
+      console.warn('Supabase fetch failed, falling back to localStorage', e);
+    }
+  }
+  cachedReports = lsGet('menai-reports') || [];
+}
+
+function getReports() { return cachedReports; }
+
+// ── UI helpers ────────────────────────────────────────────────────────────────
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function relativeTime(ts) {
+  const diff = Date.now() - ts;
+  const s = Math.floor(diff / 1000);
+  if (s < 10) return 'just now';
+  if (s < 60) return `${s}s ago`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+function setDbPill() {
+  const pill = document.getElementById('dbPill');
+  if (USE_SUPABASE) {
+    pill.className = 'db-pill live';
+    pill.innerHTML = '<span class="dot"></span>live';
+  } else {
+    pill.className = 'db-pill local';
+    pill.innerHTML = '<span class="dot"></span>local';
+    document.getElementById('setupBanner').style.display = 'block';
+  }
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function renderFeed() {
+  const reports = getReports();
+  const list = document.getElementById('feedList');
+  if (!reports.length) {
+    list.innerHTML = '<li class="feed-empty">No reports yet — be the first!</li>';
+    return;
+  }
+  list.innerHTML = reports.slice(0, MAX_FEED_ITEMS).map(r => `
+    <li class="feed-item">
+      <span class="feed-badge ${r.status}">${r.status === 'open' ? 'Open' : 'Closed'}</span>
+      <div class="feed-info">
+        <div class="feed-name">${escHtml(r.name || 'Anonymous')}</div>
+        <div class="feed-time">${relativeTime(r.ts)}</div>
+      </div>
+    </li>
+  `).join('');
+}
+
+function renderStatus() {
+  const reports = getReports();
+  const banner = document.getElementById('statusBanner');
+  const val    = document.getElementById('statusValue');
+  const meta   = document.getElementById('statusMeta');
+
+  if (!reports.length) {
+    banner.className = 'status-banner unknown';
+    val.textContent  = 'No reports yet';
+    meta.textContent = '';
+    return;
+  }
+  const latest = reports[0];
+  banner.className = `status-banner ${latest.status}`;
+  val.textContent  = latest.status === 'open' ? '✓ Open' : '✕ Closed';
+  const reporter   = latest.name ? `by ${escHtml(latest.name)}` : 'by anonymous';
+  meta.textContent = `Reported ${relativeTime(latest.ts)} ${reporter}`;
+}
+
+// ── Rate limiting (always uses local timestamps for instant feedback) ─────────
+function checkRateLimit() {
+  const now     = Date.now();
+  const reports = getReports();
+
+  // Global 30 s — anyone
+  if (reports.length) {
+    const sinceLastAny = now - reports[0].ts;
+    if (sinceLastAny < GLOBAL_COOLDOWN_MS) {
+      const wait = Math.ceil((GLOBAL_COOLDOWN_MS - sinceLastAny) / 1000);
+      return { blocked: true, reason: `Someone just reported — please wait ${wait}s.` };
+    }
+  }
+
+  // Per-user 5 min
+  const mine = reports.filter(r => r.uid === userId);
+  if (mine.length) {
+    const sinceLastMine = now - mine[0].ts;
+    if (sinceLastMine < USER_COOLDOWN_MS) {
+      const wait = Math.ceil((USER_COOLDOWN_MS - sinceLastMine) / 1000);
+      const m = Math.floor(wait / 60), s = wait % 60;
+      return { blocked: true, reason: `You can report again in ${m > 0 ? m + 'm ' : ''}${s}s.` };
+    }
+  }
+
+  return { blocked: false };
+}
+
+function updateButtonState() {
+  const check = checkRateLimit();
+  const btnO  = document.getElementById('btnOpen');
+  const btnC  = document.getElementById('btnClosed');
+  const msg   = document.getElementById('rateMsg');
+  btnO.disabled = btnC.disabled = check.blocked;
+  msg.textContent = check.blocked ? check.reason : '';
+  msg.className   = check.blocked ? 'rate-msg warning' : 'rate-msg';
+}
+
+// ── Report submission ─────────────────────────────────────────────────────────
+async function report(status) {
+  const check = checkRateLimit();
+  if (check.blocked) { showToast(check.reason); return; }
+
+  // Optimistic UI
+  document.getElementById('btnOpen').disabled   = true;
+  document.getElementById('btnClosed').disabled = true;
+
+  const name  = document.getElementById('nameInput').value.trim().slice(0, 60);
+  const entry = { status, name, uid: userId, ts: Date.now() };
+
+  if (USE_SUPABASE) {
+    try {
+      await insertReportRemote(status, name);
+      await loadReports();         // refresh from DB
+    } catch (e) {
+      console.warn('Supabase insert failed, saving locally', e);
+      cachedReports.unshift(entry);
+      if (cachedReports.length > 50) cachedReports.length = 50;
+      lsSet('menai-reports', cachedReports);
+    }
+  } else {
+    cachedReports.unshift(entry);
+    if (cachedReports.length > 50) cachedReports.length = 50;
+    lsSet('menai-reports', cachedReports);
+  }
+
+  renderStatus();
+  renderFeed();
+  updateButtonState();
+  showToast(status === 'open' ? '✓ Reported as open — thanks!' : '✕ Reported as closed — thanks!');
+}
+
+// ── Poll for new reports every 30 s (keeps feed live for all users) ───────────
+async function poll() {
+  await loadReports();
+  renderStatus();
+  renderFeed();
+  updateButtonState();
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+setDbPill();
+poll();
+setInterval(poll, 30000);
+setInterval(updateButtonState, 5000); // countdown refresh
+</script>
+</body>
+</html>
